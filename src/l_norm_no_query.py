@@ -1,0 +1,103 @@
+import torch 
+from torch import linalg as LA
+from evotorch import Problem, SolutionBatch
+import time
+
+class l_norm(Problem):
+    def __init__(self, 
+                 d: int,                    # Dimensionality of the problem
+                 label: int,                # Label of the original image
+                 I: torch.Tensor,           # Original image
+                 dim: int,                  # Length/Width of original image (for ImageNet=224)  
+                 height: int,               # Height of lower image subspace
+                 width: int,                # Width of lower image subspace
+                 upsizer: list,             # upsizer for upscaling image subspace
+                 net,                       # Neural Network for inference
+                 exp_update,                # Whether e_sigma is used, defaults to None
+                 e_sigma: float,            # Step size enlarger of dynamic configuration
+                 device: bool,              
+                 start_time: float,
+                 query_budget: int,         # Query budget, most often 30.000
+                 abl_c: bool,               # Whether ablation should be done on the dynamic configuration strategy
+                 norm):                     # Norm to be used, most often 2 (euclidian norm)
+        super().__init__(
+            objective_sense="min",
+            solution_length=d,
+            bounds=(torch.zeros(height*width*3), torch.ones(height*width*3)),
+            device=device,
+            )
+
+        self._label = label
+        self._I = I                 
+        self._dim = dim
+        self._height = height
+        self._width = width
+        self._upsizer = upsizer           
+        self._net = net
+        self._exp_update = exp_update
+        self._e_sigma = e_sigma
+        self._device = device
+        self._query_counter = torch.tensor([], device=device)
+        self._best_norm = torch.tensor([], device=device)
+        self._time = torch.tensor([], device=device)
+        self._label_pun = 1000
+        self._near_boundary = True
+        self._start_time = start_time
+        self._query_budget = query_budget
+        self._abl_c = abl_c
+        self._best_Instance = None
+        self._norm = norm
+    
+    def _evaluate_batch(self, solution: SolutionBatch):
+        perturbation = solution.values                                  # The current population=perturbation
+        popsize = perturbation.shape[0]
+        upsizer = self._upsizer
+        height, width = self._height, self._width
+        pun = self._label_pun
+        dim = self._dim
+        
+        perturbation = (perturbation.clone().reshape(popsize, 3, self._height, self._width)).float() 
+        perturbed_image = self._I.unsqueeze(0).repeat(popsize, 1, 1, 1).float() # create tensor with popsize times the reference image
+
+        if isinstance(upsizer, list):                                   # This is the case when using subspace activation and grid downsizing
+            upsizer[0] = torch.arange(popsize).reshape(popsize, 1, 1, 1)# Update the popsize in the upsizer (only necessary if popsize is not given before)
+            perturbed_image[upsizer] += perturbation                    # Add perturbation to original image
+        elif upsizer:                                                   # For nearest neighbour and bilinear interpolation
+            perturbation = upsizer(perturbation)                        # Scale perturbation to original image size
+            perturbed_image += perturbation                             # Add perturbation to original image
+            height = self._I.shape[1]
+            width = self._I.shape[2]
+        else: 
+            perturbed_image += perturbation                             # Only for small images like CIFAR, when we search in the orginal image space
+
+        perturbed_image = torch.clamp(perturbed_image, min=0.0, max=1.0)
+        norms = LA.vector_norm(perturbation.reshape(popsize, 3*height*width), ord=float(self._norm), axis=1)
+        f = norms.detach().clone()
+        queries = torch.zeros(1, device=self._device)
+
+        preds = self._net(perturbed_image.reshape(popsize, 3, dim, dim)).argmax(1)    
+        label_puns = torch.where(preds == self._label, pun, 0)        
+        queries += torch.tensor([popsize], device=self._device)
+        f += label_puns
+        self._adv_share =torch.mean(label_puns/pun)
+
+        self._query_counter = torch.cat((self._query_counter, queries))
+        self._time = torch.cat((self._time, torch.tensor(time.time()-self._start_time, device=self._device).unsqueeze(0)))
+        best_norm = f.min().unsqueeze(0)
+
+        if len(self._best_norm) == 0:                                   # In the first generation, we always add the nearest instance, 
+            self._best_norm = torch.cat((self._best_norm, best_norm))   # which must not be adversarial
+            self._best_Instance = perturbed_image[torch.argmin(f)]
+        elif (best_norm < torch.min(self._best_norm)) and (best_norm < pun):  # Only update if nearer and adversarial
+            self._best_norm = torch.cat((self._best_norm, best_norm))
+            self._best_Instance = perturbed_image[torch.argmin(f)]
+        else:
+            self._best_norm = torch.cat((self._best_norm, self._best_norm[-1].unsqueeze(0)))
+
+        if not self._abl_c:                                             
+            if self._near_boundary and self._adv_share >= 0.95:         # When the share of adversarial examples is larger than t_adv = 0.95
+                self._exp_update = self._e_sigma                        # Manually increase the exponential update for sigma
+            else:
+                self._exp_update = None
+
+        solution.set_evals(f)   

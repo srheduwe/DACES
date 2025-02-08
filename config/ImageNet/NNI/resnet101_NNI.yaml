@@ -1,0 +1,32 @@
+experiment:
+  model: "resnet101"
+  samples: 200
+  scaling_method: "nni"
+  saving: True
+  indices: "data/correct_indices/ImageNet/resnet101_test.npy"
+  split: "test"
+  logging: 300
+  seed_images: 42
+  number_seeds: 10
+  query_budget: 30000
+  abl_c: False
+  abl_p: False
+  norm: 2
+
+parameters:
+  c_1: 0.0009491677108
+  c_1_ratio: 2.3526721935377
+  c_c: 0.0658367000557
+  c_c_ratio: 1.207643245963
+  c_m: 0.5686191705902
+  c_mu: 0.00415052491
+  c_mu_ratio: 2.678917101898
+  c_sigma: 0.0082748019543
+  c_sigma_ratio: 1.8813217943943
+  damp_sigma: 1.0082722268148
+  damp_sigma_ratio: 0.5801363151528
+  e_sigma: 0.3970439763507
+  popsize: 23
+  scaling_factor: 14
+  stdev_init: 0.0848110498039
+  stdev_max: 2.6130781817644

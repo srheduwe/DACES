@@ -1,0 +1,33 @@
+experiment:
+  models: 
+    - "resnet50"
+    - "resnet101"
+    - "vgg16"
+    - "ViT"
+  samples: 20
+  scaling_method: "subspace_activation"
+  saving: False
+  indices: "data/correct_indices/ImageNet/joint_train.npy"
+  split: "train"
+  logging: 300
+  abl_c: False
+  abl_p: False
+  norm: 2
+
+parameters:
+  c_1: None
+  c_1_ratio: None
+  c_c: None
+  c_c_ratio: None
+  c_m: None
+  c_mu: None
+  c_mu_ratio: None
+  c_sigma: None
+  c_sigma_ratio: None
+  damp_sigma: None
+  damp_sigma_ratio: None
+  e_sigma: None
+  popsize: None
+  scaling_factor: None
+  stdev_init: None
+  stdev_max: None

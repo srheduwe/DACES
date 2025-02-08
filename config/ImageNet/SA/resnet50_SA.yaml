@@ -1,0 +1,31 @@
+experiment:
+  model: "resnet50"
+  samples: 200
+  scaling_method: "subspace_activation"
+  saving: True
+  indices: "data/correct_indices/ImageNet/resnet50_test.npy"
+  split: "test"
+  logging: 300
+  seed_images: 42
+  number_seeds: 10
+  query_budget: 30000
+  abl_c: False
+  abl_p: False
+  norm: 2
+
+parameters:
+  c_1: 0.0005848023802
+  c_1_ratio: 1.7823703190982
+  c_c: 0.0129521590354
+  c_c_ratio: 1.4194055408794
+  c_m: 0.3408750623641
+  c_mu: 0.0019692198942
+  c_mu_ratio: 1.6569904750733
+  c_sigma: 0.0061381297789
+  c_sigma_ratio: 1.7768244094624
+  damp_sigma: 1.0012091024479
+  damp_sigma_ratio: 0.6263989333374
+  e_sigma: 0.1701380055367
+  popsize: 78
+  stdev_init: 0.0982555392735
+  stdev_max: 2.5178735451277
