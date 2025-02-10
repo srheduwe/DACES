@@ -2,7 +2,6 @@ DACES: Decision-based Adversarial Attacks via CMA-ES
 ==============================
 
 Welcome to DACES, an algorithm for generating Adversarial Examples with CMA-ES to investigate robustness of Neural Networks. 
-As a basis for our work, we use the EvoTorch library. Our adapted version can be found here: https://github.com/srheduwe/DACES-with-evotorch.git
 
 Getting started:
 To create an Anaconda environment with the necessary dependencies follow these steps:
@@ -17,6 +16,9 @@ To run the attack, choose the experiment you want to run from the config files, 
 ```
 python src/DACES.py config/ImageNet/BI/resnet50_BI.yaml
 ```
+
+We use the [EvoTorch](https://evotorch.ai) library as a basis for our work. Our adapted version can be found [here](https://github.com/srheduwe/DACES-with-evotorch.git).
+
 
 Project Organization
 ------------
