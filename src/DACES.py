@@ -6,12 +6,11 @@ from evotorch.tools import set_default_logger_config
 import logging
 import warnings
 import os
-from src.fitness import fitness
-# from fitness_no_query import fitness #for ablation on query strategy
+from fitness import fitness
 import sys
 from omegaconf import OmegaConf
-from src.loader import loader
-from src.dim_reduction import downsizer
+from loader import loader
+from dim_reduction import downsizer
 from torch.utils.data import DataLoader
 import time
 
@@ -45,7 +44,7 @@ def ae_gen(config, budget=None, seed_inc=0):
 
             _, height, width, upsizer = downsizer(config=config, image=image, dim=dim, popsize=popsize)
 
-            problem = l_norm(
+            problem = fitness(
                 d=height*width*3,                               # Dimensionality of the problem                
                 label=label,                                    # Label of the original image
                 I=image,                                        # Original image

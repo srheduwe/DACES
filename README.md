@@ -7,8 +7,12 @@ Virtual Environment
 To create an Anaconda environment with the necessary dependencies follow these steps:
 1. conda create -n DACES python=3.9.19
 2. conda activate DACES
-3. pip install git+https://github.com/srheduwe/DACES.git
+3. pip install git+https://github.com/srheduwe/DACES-with-evotorch.git
 4. pip install -r requirements.txt
+
+To run the attack, just choose the experiment you want to run from the config files:
+python src/DACES.py config/ImageNet/BI/resnet50_BI.yaml
+
 
 Project Organization
 ------------
