@@ -1,3 +1,4 @@
+git+https://github.com/srheduwe/DACES-with-evotorch.git
 omegaconf==2.3.0
 torchvision==0.21.0
 timm==1.0.14
