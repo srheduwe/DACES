@@ -3,7 +3,7 @@ from torch import linalg as LA
 from evotorch import Problem, SolutionBatch
 import time
 
-class l_norm(Problem):
+class fitness(Problem):
     def __init__(self, 
                  d: int,                    # Dimensionality of the problem
                  label: int,                # Label of the original image
@@ -41,7 +41,7 @@ class l_norm(Problem):
         self._best_norm = torch.tensor([], device=device)
         self._time = torch.tensor([], device=device)
         self._label_pun = 1000
-        self._near_boundary = False
+        self._near_boundary = True
         self._start_time = start_time
         self._query_budget = query_budget
         self._abl_c = abl_c
@@ -75,40 +75,11 @@ class l_norm(Problem):
         f = norms.detach().clone()
         queries = torch.zeros(1, device=self._device)
 
-        if not self._near_boundary:                                     # Stage 1 of query strategy
-            queried_instances = norms == norms.min()                    # We only query the nearest image
-            no_of_queried_instances = queried_instances.sum()
-            
-            preds = self._net(perturbed_image[queried_instances].reshape(no_of_queried_instances, 3, dim, dim)).argmax(1)
-            label_puns = torch.where(preds == self._label, pun, 0)            
-            queries += no_of_queried_instances.unsqueeze(0)
-
-            if label_puns.sum() == pun*no_of_queried_instances:         # True, as soon as nearest image is misclassified
-                self._near_boundary = True
-            else:
-                f[queried_instances] += label_puns                      # We only add the label puns, when we do not jump to stage 2 afterwards
-
-        if self._near_boundary:                                         # Stage 2 of query strategy
-            mu_eff = 0.3                                                # Share of effektive population
-            norm_threshold = torch.quantile(norms, mu_eff)
-            queried_instances = norms < norm_threshold                  # We first only query mu_eff
-            remaining_instances = norms >= norm_threshold
-            no_of_queried_instances = queried_instances.sum()
-            no_of_remaining_instances = remaining_instances.sum()
-
-            preds = self._net(perturbed_image[queried_instances].reshape(no_of_queried_instances, 3, dim, dim)).argmax(1)
-            label_puns = torch.where(preds == self._label, pun, 0)
-            f[queried_instances] += label_puns
-            self._adv_share = (torch.mean(label_puns/pun))
-
-            if self._adv_share >= 0.75:                                 # Stage 3 of query strategy
-                preds_rest = self._net(perturbed_image[remaining_instances].reshape(no_of_remaining_instances, 3, dim, dim)).argmax(1)    
-                label_puns_rest = torch.where(preds_rest == self._label, pun, 0)        
-                queries += (no_of_queried_instances.unsqueeze(0)+no_of_remaining_instances.unsqueeze(0))
-                f[remaining_instances] += label_puns_rest
-                self._adv_share = (self._adv_share*mu_eff) + (torch.mean(label_puns_rest/pun)*(1-mu_eff))
-            else:
-                queries += no_of_queried_instances.unsqueeze(0)
+        preds = self._net(perturbed_image.reshape(popsize, 3, dim, dim)).argmax(1)    
+        label_puns = torch.where(preds == self._label, pun, 0)        
+        queries += torch.tensor([popsize], device=self._device)
+        f += label_puns
+        self._adv_share =torch.mean(label_puns/pun)
 
         self._query_counter = torch.cat((self._query_counter, queries))
         self._time = torch.cat((self._time, torch.tensor(time.time()-self._start_time, device=self._device).unsqueeze(0)))
@@ -128,9 +99,5 @@ class l_norm(Problem):
                 self._exp_update = self._e_sigma                        # Manually increase the exponential update for sigma
             else:
                 self._exp_update = None
-                # x_adv = perturbed_image[torch.argmin(f)]
-                # unnormalized_source_direction = self._I - x_adv
-                # self._bias = 0.01 * unnormalized_source_direction
-                # self._bias = self._bias.flatten()
 
         solution.set_evals(f)   

@@ -118,6 +118,8 @@ def subspace_activation(image: torch.Tensor, popsize: int = 100):
 
 
 def nearest_neighbor_interpolation(image, scaling_factor):
+    '''Returns downscaled image, number of pixels and inverse_scaling.
+    The inverse_scaling can be used to upscale the problem to the original size.'''
     scaling_factor = 1/scaling_factor
     C, H, W = image.shape                       # Get the dimensions of the original image
     new_H = int(H * scaling_factor)             # Calculate the dimensions of the scaled image
@@ -145,6 +147,8 @@ def nearest_neighbor_interpolation(image, scaling_factor):
     return scaled_image, new_H, new_W, inverse_scaling
 
 def bilinear_interpolation(image: torch.tensor, dim: int, scaling_factor: int = 32):
+    '''Returns downscaled image, number of pixels and inverse_scaling.
+    The inverse_scaling can be used to upscale the problem to the original size.'''
     dim_down = np.ceil(dim/scaling_factor).astype(int)
     downscaling = transforms.Compose([transforms.Resize([dim_down, dim_down])])
     downscaled_image = downscaling(image)
@@ -154,15 +158,19 @@ def bilinear_interpolation(image: torch.tensor, dim: int, scaling_factor: int = 
 def downsizer(config, image: torch.tensor, dim: int, popsize: int = 100):
     '''Wrapper for downsizing functions.'''
     if config.experiment.scaling_method == "grid":
-        downscaled_image, height, width, grid = grid_downsizer( # Scaling down the problem, if necessary
+        downscaled_image, height, width, grid = grid_downsizer( 
                                                 image=image,
                                                 dim=dim,
                                                 scaling_factor=config.parameters.scaling_factor,
                                                 popsize=popsize)
+    
     elif config.experiment.scaling_method == "subspace_activation":
         downscaled_image, height, width, grid = subspace_activation(image=image, popsize=popsize)
+    
     elif config.experiment.scaling_method == "bilinear_interpolation":
         downscaled_image, height, width, grid = bilinear_interpolation(image=image, dim=dim, scaling_factor=config.parameters.scaling_factor)
+    
     elif config.experiment.scaling_method == "nni":
         downscaled_image, height, width, grid = nearest_neighbor_interpolation(image=image, scaling_factor=config.parameters.scaling_factor)
+    
     return downscaled_image, height, width, grid

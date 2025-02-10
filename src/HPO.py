@@ -12,7 +12,7 @@ import time
 import sys
 from omegaconf import OmegaConf
 import numpy as np
-from AE_gen import ae_gen
+from src.DACES import ae_gen
 
 np.random.seed(seed=42)
 

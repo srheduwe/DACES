@@ -68,21 +68,22 @@ def loader(model, split: str ="test"):
         transform = transforms.Compose([transforms.Resize([dim, dim]), transforms.ToTensor()])
         trainset = torchvision.datasets.ImageNet(root='/storage/work/duwe/imagenet-1k', split='train', transform=transform)    
         testset = torchvision.datasets.ImageNet(root='/storage/work/duwe/imagenet-1k', split='val', transform=transform)
+    
+    elif model == "resnet34_cifar100":
+        net = timm.create_model("resnet34_cifar100", pretrained=True)
 
-    elif model == "InceptionV3":
-        net = torch.hub.load('pytorch/vision:v0.10.0', 'inception_v3', weights=torchvision.models.Inception_V3_Weights.IMAGENET1K_V1)
         if torch.cuda.is_available():
             net = net.cuda()
 
-        mean = torch.Tensor([0.485, 0.456, 0.406])
-        std = torch.Tensor([0.229, 0.224, 0.225])
+        mean = torch.Tensor([0.5071, 0.4867, 0.4408])
+        std = torch.Tensor([0.2675, 0.2565, 0.2761])
         normalizer = torchvision.transforms.Normalize(mean=mean, std=std)
         net = torch.nn.Sequential(normalizer, net).eval()
 
-        dim, channel = 299, 3
-        transform = transforms.Compose([transforms.Resize([dim, dim]), transforms.ToTensor()])
-        trainset = torchvision.datasets.ImageNet(root='/storage/work/duwe/imagenet-1k', split='train', transform=transform)    
-        testset = torchvision.datasets.ImageNet(root='/storage/work/duwe/imagenet-1k', split='val', transform=transform)
+        dim, channel = 32, 3
+        transform = transforms.Compose([transforms.ToTensor()])
+        trainset = torchvision.datasets.CIFAR100(root="/home/duwe/AE-with-EAs/data/raw", train=True, transform=transform)    
+        testset = torchvision.datasets.CIFAR100(root="/home/duwe/AE-with-EAs/data/raw", train=False, transform=transform)
 
     elif model == "resnet50_cifar100":
 
@@ -140,22 +141,6 @@ def loader(model, split: str ="test"):
         trainset = torchvision.datasets.CIFAR100(root="/home/duwe/AE-with-EAs/data/raw", train=True, transform=transform)    
         testset = torchvision.datasets.CIFAR100(root="/home/duwe/AE-with-EAs/data/raw", train=False, transform=transform)
     
-    elif model == "resnet34_cifar100":
-        net = timm.create_model("resnet34_cifar100", pretrained=True)
-
-        if torch.cuda.is_available():
-            net = net.cuda()
-
-        mean = torch.Tensor([0.5071, 0.4867, 0.4408])
-        std = torch.Tensor([0.2675, 0.2565, 0.2761])
-        normalizer = torchvision.transforms.Normalize(mean=mean, std=std)
-        net = torch.nn.Sequential(normalizer, net).eval()
-
-        dim, channel = 32, 3
-        transform = transforms.Compose([transforms.ToTensor()])
-        trainset = torchvision.datasets.CIFAR100(root="/home/duwe/AE-with-EAs/data/raw", train=True, transform=transform)    
-        testset = torchvision.datasets.CIFAR100(root="/home/duwe/AE-with-EAs/data/raw", train=False, transform=transform)
-
     if split == "test":
         return net, testset, dim, channel
     else:

@@ -98,3 +98,4 @@ bashfiles/
 notebooks/
 **/outputs
 smac3_output/
+.gitignore

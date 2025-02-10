@@ -6,8 +6,8 @@ from evotorch.tools import set_default_logger_config
 import logging
 import warnings
 import os
-from src.l_norm import l_norm
-# from l_norm_no_query import l_norm #for ablation on query strategy
+from src.fitness import fitness
+# from fitness_no_query import fitness #for ablation on query strategy
 import sys
 from omegaconf import OmegaConf
 from src.loader import loader
@@ -34,7 +34,7 @@ def ae_gen(config, budget=None, seed_inc=0):
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore")
 
-        pop_eval_best_scores, queries, norms = [], [], []
+        queries, norms = [], []
 
         indices = np.load(config.experiment.indices)                            # Indices of all correctly classified instances in testset
         sampled_indices = np.random.choice(a=indices, size=config.experiment.samples, replace=False)
@@ -97,7 +97,6 @@ def ae_gen(config, budget=None, seed_inc=0):
             searcher.run(10000) # Arbitrary high number, CMA-ES script has been change so that it stops based on query budget, not generations
 
             pop_best = searcher.status["pop_best_eval"]
-            pop_eval_best_scores.append(pop_best if pop_best is not None else 10**3)
             queries.append(searcher.problem._query_counter.cpu().numpy())
             norms.append(pandas_logger.to_dataframe()["pop_best_eval"].values)
 
@@ -105,7 +104,6 @@ def ae_gen(config, budget=None, seed_inc=0):
             print(f"Instance {i} took {round(end - start, 3)} seconds")
             print(pop_best)
 
-            popsize = searcher.popsize
             folder = sys.argv[1][7:-5]
             path = f'data/results/{folder}_{seed_inc}/'
 
@@ -114,40 +112,14 @@ def ae_gen(config, budget=None, seed_inc=0):
                 path = f'data/results/{folder}_{seed_inc}/'
                 os.makedirs(path, exist_ok=True)
 
-                perturbation, Evals = searcher.population.access_values(keep_evals=True), searcher.population.access_evals()
                 pandas_logger.to_dataframe().to_csv(path + f"{i}_df.csv")
-                torch.save(searcher.m, path + f"{i}_m.pt")
-                torch.save(Evals, path + f"{i}_evals.pt")
                 torch.save(searcher.problem._best_Instance, path + f"{i}_best_Instance.pt")
                 np.save(path + f"{i}_queries.npy", searcher.problem._query_counter.cpu().numpy())
                 np.save(path + f"{i}_norms.npy", searcher.problem._best_norm.cpu().numpy())
                 np.save(path + f"{i}_times.npy", searcher.problem._time.cpu().numpy())
 
-                if upsizer: 
-                    perturbation = perturbation.clone().reshape(popsize, 3, height, width).float()
-                    perturbed_image = image.unsqueeze(0).repeat(popsize, 1, 1, 1).float()
-
-                    if isinstance(upsizer, list):
-                        upsizer[0] = np.array([[[[i]]] for i in range(popsize)])
-                        perturbed_image[upsizer] += perturbation
-                    else:
-                        perturbation = upsizer(perturbation)
-                        perturbed_image += perturbation
-
-                    perturbed_image = torch.clamp(perturbed_image, min=0.0, max=1.0)
-                    preds = net(perturbed_image.reshape(popsize, 3, dim, dim)).argmax(1) 
-
-                    torch.save(perturbed_image, path + f"{i}_pop.pt")
-                    torch.save(perturbation, path + f"{i}_pop_pert.pt")
-                else:
-                    torch.save(perturbation, path + f"{i}_pop.pt")
-                    perturbation = perturbation.reshape(popsize, 3, height, width).float()
-                    perturbation = torch.clamp(perturbation, min=0.0, max=1.0)
-                    preds = net(perturbed_image.reshape(popsize, 3, dim, dim)).argmax(1) 
-
-                torch.save(preds, path + f"{i}_preds.pt")
-
     if __name__ != '__main__':
+        # Calculate the AUC when running DACES as part of the HPO.py
         area_instances_stepwise_list = [query * norm for query, norm in zip(queries, norms)]
         area_instances = [area_instances_stepwise.sum() for area_instances_stepwise in area_instances_stepwise_list]
         average_area = np.mean(area_instances)
