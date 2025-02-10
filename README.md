@@ -33,5 +33,4 @@ Project Organization
          └── dim_reduction.py   <- Different dimensionality reduction techniques, incl. BI, NNI, SA and grid downsizing
          └── evaluate_models.py <- for obtaining the correct indices
          └── fitness            <- calculates the fitness values
-         └── fitness_no_query   <- for ablation studies
          └── loader.py          <- For loading the different models and datasets
