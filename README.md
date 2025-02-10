@@ -10,9 +10,10 @@ conda activate DACES
 pip install git+https://github.com/srheduwe/DACES-with-evotorch.git
 pip install -r requirements.txt
 ```
-To run the attack, just choose the experiment you want to run from the config files:
+To run the attack, choose the experiment you want to run from the config files, e.g.:
+```
 python src/DACES.py config/ImageNet/BI/resnet50_BI.yaml
-
+```
 
 Project Organization
 ------------
