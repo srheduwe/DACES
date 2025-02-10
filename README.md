@@ -5,18 +5,11 @@ Generating Adversarial Examples with Evolutionary Algorithms to investigate robu
 
 To create an Anaconda environment with the necessary dependencies follow these steps:
 ```
-function test() {
-  console.log("conda create -n DACES python=3.9.19
-               conda activate DACES
-               pip install git+https://github.com/srheduwe/DACES-with-evotorch.git
-               pip install -r requirements.txt");
-}
+conda create -n DACES python=3.9.19
+conda activate DACES
+pip install git+https://github.com/srheduwe/DACES-with-evotorch.git
+pip install -r requirements.txt
 ```
-1. conda create -n DACES python=3.9.19
-2. conda activate DACES
-3. pip install git+https://github.com/srheduwe/DACES-with-evotorch.git
-4. pip install -r requirements.txt
-
 To run the attack, just choose the experiment you want to run from the config files:
 python src/DACES.py config/ImageNet/BI/resnet50_BI.yaml
 
