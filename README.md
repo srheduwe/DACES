@@ -10,14 +10,17 @@ conda create -n DACES python=3.9.19
 conda activate DACES
 pip install -r requirements.txt
 ```
-If you want to rerun the HPO, you need to install [SMAC](https://automl.github.io/SMAC3/main/1_installation.html).
-
 To run the attack, choose the experiment you want to run from the config files, e.g.:
 ```
 python src/DACES.py config/CIFAR100/resnet34.yaml
 ```
 
 For running experiments on ImageNet, follow the instructions for obtaining the dataset from the official [website](https://www.image-net.org). Then, place the dataset into data/raw.
+
+If you want to rerun the HPO, you need to install [SMAC](https://automl.github.io/SMAC3/main/1_installation.html). Then, choose any version for which you want to do the HPO, e.g.:
+```
+python src/HPO.py config/ImageNet/BI/BI_HPO.yaml
+```
 
 We use the [EvoTorch](https://evotorch.ai) library as a basis for our work. Our adapted version can be found [here](https://github.com/srheduwe/DACES-with-evotorch.git).
 
