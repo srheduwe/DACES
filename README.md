@@ -13,7 +13,7 @@ pip install -r requirements.txt
 
 To run the attack, choose the experiment you want to run from the config files, e.g.:
 ```
-python src/DACES.py config/ImageNet/NNI/resnet50_NNI.yaml
+python src/DACES.py config/CIFAR100/resnet34.yaml
 ```
 
 We use the [EvoTorch](https://evotorch.ai) library as a basis for our work. Our adapted version can be found [here](https://github.com/srheduwe/DACES-with-evotorch.git).
