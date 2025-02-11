@@ -12,7 +12,7 @@ import time
 import sys
 from omegaconf import OmegaConf
 import numpy as np
-from src.DACES import ae_gen
+from DACES import attack
 
 np.random.seed(seed=42)
 
@@ -74,7 +74,7 @@ class EA:
                 print("Seed: ", seed, ", model: ", model)
                 configuration.experiment.model = model
                 configuration.experiment.seed_images = seed
-                mean_eval = ae_gen(configuration, np.ceil(budget))
+                mean_eval = attack(configuration, np.ceil(budget))
                 mean_eval_all += [mean_eval]
                 overall_mean = np.mean(mean_eval_all)
                 print(overall_mean)

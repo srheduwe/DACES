@@ -17,7 +17,7 @@ import time
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(device)
 
-def ae_gen(config, budget=None, seed_inc=0):
+def attack(config, budget=None, seed_inc=0):
     np.random.seed(seed=config.experiment.seed_images)                          # Seed for images
     torch.manual_seed(config.experiment.seed_images + seed_inc)                 # Seed for experiment
     torch.cuda.manual_seed(config.experiment.seed_images + seed_inc)            # Seed for experiment
@@ -157,6 +157,6 @@ if __name__ == '__main__':
 
     for i in range(config.experiment.number_seeds):
         start = time.time()
-        ae_gen(config, seed_inc=i)
+        attack(config, seed_inc=i)
         end = time.time()
         print(end - start)
