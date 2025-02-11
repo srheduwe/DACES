@@ -5,6 +5,19 @@ import torchvision.models as models
 import timm
 from torch import nn
 import detectors
+import os
+
+def load_imagenet(dim=224):
+    transform = transforms.Compose([transforms.Resize([dim, dim]), transforms.ToTensor()])
+    trainset = torchvision.datasets.ImageNet(root=os.getcwd() + "/data/raw", split='train', transform=transform)    
+    testset = torchvision.datasets.ImageNet(root=os.getcwd() + "/data/raw", split='val', transform=transform)
+    return trainset, testset
+
+def load_cifar100(dim=32):
+    transform = transforms.Compose([transforms.ToTensor()])
+    trainset = torchvision.datasets.CIFAR100(root=os.getcwd() + "/data/raw", train=True, transform=transform, download=True)    
+    testset = torchvision.datasets.CIFAR100(root=os.getcwd() + "/data/raw", train=False, transform=transform, download=True)
+    return trainset, testset
 
 def loader(model, split: str ="test"):
     '''Returns the model, the respective dataset and size of the dimension and channel.'''
@@ -18,11 +31,8 @@ def loader(model, split: str ="test"):
         normalizer = torchvision.transforms.Normalize(mean=mean, std=std)
         net = torch.nn.Sequential(normalizer, net).eval()
 
-        dim, channel = 224, 3
-        transform = transforms.Compose([transforms.Resize([dim, dim]), transforms.ToTensor()])
-        trainset = torchvision.datasets.ImageNet(root='/storage/work/duwe/imagenet-1k', split='train', transform=transform)    
-        testset = torchvision.datasets.ImageNet(root='/storage/work/duwe/imagenet-1k', split='val', transform=transform)
-    
+        dim = 224
+        trainset, testset = load_imagenet(dim=dim)
 
     elif model == "resnet101":
         net = models.resnet101(weights=models.ResNet101_Weights.IMAGENET1K_V1)
@@ -34,10 +44,8 @@ def loader(model, split: str ="test"):
         normalizer = torchvision.transforms.Normalize(mean=mean, std=std)
         net = torch.nn.Sequential(normalizer, net).eval()
 
-        dim, channel = 224, 3
-        transform = transforms.Compose([transforms.Resize([dim, dim]), transforms.ToTensor()])
-        trainset = torchvision.datasets.ImageNet(root='/storage/work/duwe/imagenet-1k', split='train', transform=transform)    
-        testset = torchvision.datasets.ImageNet(root='/storage/work/duwe/imagenet-1k', split='val', transform=transform)
+        dim = 224
+        trainset, testset = load_imagenet(dim=dim)
 
     elif model == "vgg16":
         net = models.vgg16(weights=models.VGG16_Weights.IMAGENET1K_V1)
@@ -49,10 +57,8 @@ def loader(model, split: str ="test"):
         normalizer = torchvision.transforms.Normalize(mean=mean, std=std)
         net = torch.nn.Sequential(normalizer, net).eval()
 
-        dim, channel = 224, 3
-        transform = transforms.Compose([transforms.Resize([dim, dim]), transforms.ToTensor()])
-        trainset = torchvision.datasets.ImageNet(root='/storage/work/duwe/imagenet-1k', split='train', transform=transform)    
-        testset = torchvision.datasets.ImageNet(root='/storage/work/duwe/imagenet-1k', split='val', transform=transform)
+        dim = 224
+        trainset, testset = load_imagenet(dim=dim)
 
     elif model == "ViT":
         net = timm.create_model('vit_base_patch16_224', pretrained=True)
@@ -64,11 +70,9 @@ def loader(model, split: str ="test"):
         normalizer = torchvision.transforms.Normalize(mean=mean, std=std)
         net = torch.nn.Sequential(normalizer, net).eval()
 
-        dim, channel = 224, 3
-        transform = transforms.Compose([transforms.Resize([dim, dim]), transforms.ToTensor()])
-        trainset = torchvision.datasets.ImageNet(root='/storage/work/duwe/imagenet-1k', split='train', transform=transform)    
-        testset = torchvision.datasets.ImageNet(root='/storage/work/duwe/imagenet-1k', split='val', transform=transform)
-    
+        dim = 224
+        trainset, testset = load_imagenet(dim=dim)
+
     elif model == "resnet34_cifar100":
         net = timm.create_model("resnet34_cifar100", pretrained=True)
 
@@ -80,13 +84,10 @@ def loader(model, split: str ="test"):
         normalizer = torchvision.transforms.Normalize(mean=mean, std=std)
         net = torch.nn.Sequential(normalizer, net).eval()
 
-        dim, channel = 32, 3
-        transform = transforms.Compose([transforms.ToTensor()])
-        trainset = torchvision.datasets.CIFAR100(root="/home/duwe/AE-with-EAs/data/raw", train=True, transform=transform)    
-        testset = torchvision.datasets.CIFAR100(root="/home/duwe/AE-with-EAs/data/raw", train=False, transform=transform)
+        dim = 32
+        trainset, testset = load_cifar100(dim=dim)
 
     elif model == "resnet50_cifar100":
-
         net = timm.create_model("resnet50_cifar100", pretrained=True)
         if torch.cuda.is_available():
             net = net.cuda()
@@ -96,10 +97,8 @@ def loader(model, split: str ="test"):
         normalizer = torchvision.transforms.Normalize(mean=mean, std=std)
         net = torch.nn.Sequential(normalizer, net).eval()
 
-        dim, channel = 32, 3
-        transform = transforms.Compose([transforms.ToTensor()])
-        trainset = torchvision.datasets.CIFAR100(root="/home/duwe/AE-with-EAs/data/raw", train=True, transform=transform)    
-        testset = torchvision.datasets.CIFAR100(root="/home/duwe/AE-with-EAs/data/raw", train=False, transform=transform)
+        dim = 32
+        trainset, testset = load_cifar100(dim=dim)
 
     elif model == "vgg16_cifar100":
         net = timm.create_model("vgg16_bn_cifar100", pretrained=True)
@@ -111,11 +110,9 @@ def loader(model, split: str ="test"):
         normalizer = torchvision.transforms.Normalize(mean=mean, std=std)
         net = torch.nn.Sequential(normalizer, net).eval()
 
-        dim, channel = 32, 3
-        transform = transforms.Compose([transforms.ToTensor()])
-        trainset = torchvision.datasets.CIFAR100(root="/home/duwe/AE-with-EAs/data/raw", train=True, transform=transform)    
-        testset = torchvision.datasets.CIFAR100(root="/home/duwe/AE-with-EAs/data/raw", train=False, transform=transform)
-    
+        dim = 32
+        trainset, testset = load_cifar100(dim=dim)
+
     elif model == "ViT_cifar100":
         net = timm.create_model("timm/vit_base_patch16_224.orig_in21k_ft_in1k",
         pretrained=False)
@@ -136,12 +133,10 @@ def loader(model, split: str ="test"):
         normalizer = torchvision.transforms.Normalize(mean=mean, std=std)
         net = torch.nn.Sequential(normalizer, net).eval()
 
-        dim, channel = 224, 3
-        transform = transforms.Compose([transforms.Resize([dim, dim]), transforms.ToTensor()])
-        trainset = torchvision.datasets.CIFAR100(root="/home/duwe/AE-with-EAs/data/raw", train=True, transform=transform)    
-        testset = torchvision.datasets.CIFAR100(root="/home/duwe/AE-with-EAs/data/raw", train=False, transform=transform)
-    
+        dim = 224
+        trainset, testset = load_cifar100(dim=dim)
+
     if split == "test":
-        return net, testset, dim, channel
+        return net, testset, dim
     else:
-        return net, trainset, dim, channel
+        return net, trainset, dim

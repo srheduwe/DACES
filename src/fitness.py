@@ -41,7 +41,7 @@ class fitness(Problem):
         self._best_norm = torch.tensor([], device=device)
         self._time = torch.tensor([], device=device)
         self._label_pun = 1000
-        self._near_boundary = False
+        self._C_ben = False                 # indicates, whether any instance has been classified as benign before
         self._start_time = start_time
         self._query_budget = query_budget
         self._abl_c = abl_c
@@ -75,7 +75,7 @@ class fitness(Problem):
         f = norms.detach().clone()
         queries = torch.zeros(1, device=self._device)
 
-        if not self._near_boundary:                                     # Stage 1 of query strategy
+        if not self._C_ben:                                     # Stage 1 of query strategy
             queried_instances = norms == norms.min()                    # We only query the nearest image
             no_of_queried_instances = queried_instances.sum()
             
@@ -84,11 +84,11 @@ class fitness(Problem):
             queries += no_of_queried_instances.unsqueeze(0)
 
             if label_puns.sum() == pun*no_of_queried_instances:         # True, as soon as nearest image is misclassified
-                self._near_boundary = True
+                self._C_ben = True
             else:
                 f[queried_instances] += label_puns                      # We only add the label puns, when we do not jump to stage 2 afterwards
 
-        if self._near_boundary:                                         # Stage 2 of query strategy
+        if self._C_ben:                                         # Stage 2 of query strategy
             mu_eff = 0.3                                                # Share of effektive population
             norm_threshold = torch.quantile(norms, mu_eff)
             queried_instances = norms < norm_threshold                  # We first only query mu_eff
@@ -124,7 +124,7 @@ class fitness(Problem):
             self._best_norm = torch.cat((self._best_norm, self._best_norm[-1].unsqueeze(0)))
 
         if not self._abl_c:                                             
-            if self._near_boundary and self._adv_share >= 0.95:         # When the share of adversarial examples is larger than t_adv = 0.95
+            if self._C_ben and self._adv_share >= 0.95:         # When the share of adversarial examples is larger than t_adv = 0.95
                 self._exp_update = self._e_sigma                        # Manually increase the exponential update for sigma
             else:
                 self._exp_update = None

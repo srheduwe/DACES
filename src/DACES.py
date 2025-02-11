@@ -24,7 +24,7 @@ def ae_gen(config, budget=None, seed_inc=0):
 
     set_default_logger_config(logger_level=logging.WARNING, override=True)
     
-    net, dataset, dim, _ = loader(model=config.experiment.model, split=config.experiment.split)
+    net, dataset, dim = loader(model=config.experiment.model, split=config.experiment.split)
     dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
 
     popsize = config.parameters.popsize
@@ -42,6 +42,10 @@ def ae_gen(config, budget=None, seed_inc=0):
             image, label = dataloader.dataset[i][0].to(device), dataloader.dataset[i][1]
             start = time.time()
 
+            if label != net(image.unsqueeze(0)).argmax(1):
+                print("Already Misclassified!")
+                break
+
             _, height, width, upsizer = downsizer(config=config, image=image, dim=dim, popsize=popsize)
 
             problem = fitness(
@@ -54,7 +58,7 @@ def ae_gen(config, budget=None, seed_inc=0):
                 upsizer=upsizer,                                # upsizer for upscaling image subspace
                 net=net,                                        # Neural Network for inference
                 exp_update=None,                                # Whether e_sigma is used, defaults to None
-                e_sigma=config.parameters.e_sigma,    # Step size enlarger of dynamic configuration
+                e_sigma=config.parameters.e_sigma,              # Step size enlarger of dynamic configuration
                 device=device,
                 start_time=start,
                 query_budget=query_budget,                      # Query budget, most often 30.000
@@ -101,21 +105,41 @@ def ae_gen(config, budget=None, seed_inc=0):
 
             end = time.time()
             print(f"Instance {i} took {round(end - start, 3)} seconds")
-            print(pop_best)
-
-            folder = sys.argv[1][7:-5]
-            path = f'data/results/{folder}_{seed_inc}/'
+            print("Final l2 norm: ", round(pop_best, 3))
+            popsize = searcher.popsize
 
             if config.experiment.saving:
                 folder = sys.argv[1][7:-5]
                 path = f'data/results/{folder}_{seed_inc}/'
                 os.makedirs(path, exist_ok=True)
 
+                perturbation, Evals = searcher.population.access_values(keep_evals=True), searcher.population.access_evals()
                 pandas_logger.to_dataframe().to_csv(path + f"{i}_df.csv")
-                torch.save(searcher.problem._best_Instance, path + f"{i}_best_Instance.pt")
+                torch.save(searcher.problem._best_Instance, path + f"{i}_adv.pt")
                 np.save(path + f"{i}_queries.npy", searcher.problem._query_counter.cpu().numpy())
                 np.save(path + f"{i}_norms.npy", searcher.problem._best_norm.cpu().numpy())
                 np.save(path + f"{i}_times.npy", searcher.problem._time.cpu().numpy())
+
+                if upsizer: 
+                    perturbation = perturbation.clone().reshape(popsize, 3, height, width).float()
+                    perturbed_image = image.unsqueeze(0).repeat(popsize, 1, 1, 1).float()
+
+                    if isinstance(upsizer, list):
+                        upsizer[0] = np.array([[[[i]]] for i in range(popsize)])
+                        perturbed_image[upsizer] += perturbation
+                    else:
+                        perturbation = upsizer(perturbation)
+                        perturbed_image += perturbation
+
+                    perturbed_image = torch.clamp(perturbed_image, min=0.0, max=1.0)
+                    preds = net(perturbed_image.reshape(popsize, 3, dim, dim)).argmax(1) 
+
+                else:
+                    perturbation = perturbation.reshape(popsize, 3, height, width).float()
+                    perturbation = torch.clamp(perturbation, min=0.0, max=1.0)
+                    preds = net(perturbed_image.reshape(popsize, 3, dim, dim)).argmax(1) 
+
+                print(f"Label changed from {label} to {preds[torch.argmin(Evals)]}")
 
     if __name__ != '__main__':
         # Calculate the AUC when running DACES as part of the HPO.py

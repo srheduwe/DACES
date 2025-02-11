@@ -23,30 +23,25 @@ class EA:
     @property
     def configspace(self) -> ConfigurationSpace:
         cs = ConfigurationSpace()
-        # stdev_init = Float("stdev_init", (0.05, 0.1), default=0.075)
-        stdev_init = Float("stdev_init", (0.005, 0.05), default=0.01)
-        # stdev_max = Float("stdev_max", (2.5, 3.5), default=3.0)
-        stdev_max = Float("stdev_max", (1.0, 3.5), default=2.0)
+        stdev_init = Float("stdev_init", (0.05, 0.1), default=0.075)
+        stdev_max = Float("stdev_max", (2.5, 3.5), default=3.0)
         e_sigma = Float("e_sigma", (0.1, 0.5), default=0.3)
         c_m = Float("c_m", (0.25, 0.75), default=0.5)
         c_sigma = Float("c_sigma", (0.005, 0.01), default=0.0075)
-        # scaling_factor = Integer("scaling_factor", (3, 19), default=15) 
-        # popsize = Integer("popsize", (20, 100), default=60) 
-        popsize = Integer("popsize", (15, 80), default=40) 
+        scaling_factor = Integer("scaling_factor", (3, 19), default=15) 
+        popsize = Integer("popsize", (20, 100), default=60) 
         c_sigma_ratio = Float("c_sigma_ratio", (1.5, 2.0), default=1.75)
         damp_sigma = Float("damp_sigma", (1.0, 1.01), default=1.005)
         damp_sigma_ratio = Float("damp_sigma_ratio", (0.5, 1.0), default=0.75)
         c_c = Float("c_c", (0.01, 0.1), default=0.05)
         c_c_ratio = Float("c_c_ratio", (1.0, 1.5), default=1.25)
-        # c_1 = Float("c_1", (0.0005, 0.001), default=0.0007)
-        c_1 = Float("c_1", (0.0005, 0.002), default=0.001)
-        # c_1_ratio = Float("c_1_ratio", (1.25, 2.5), default=1.75)
-        c_1_ratio = Float("c_1_ratio", (1.5, 3.5), default=2.5)
+        c_1 = Float("c_1", (0.0005, 0.001), default=0.0007)
+        c_1_ratio = Float("c_1_ratio", (1.25, 2.5), default=1.75)
         c_mu = Float("c_mu", (0.001, 0.01), default=0.005) 
         c_mu_ratio = Float("c_mu_ratio", (1.5, 3.0), default=2.25) 
 
         cs.add([stdev_init, stdev_max, 
-                e_sigma, c_m, c_sigma, #scaling_factor,
+                e_sigma, c_m, c_sigma, scaling_factor,
                 c_sigma_ratio, damp_sigma, damp_sigma_ratio, c_c, c_c_ratio, c_1, c_1_ratio, c_mu, c_mu_ratio, 
                 popsize,
                 ])
@@ -60,7 +55,7 @@ class EA:
         configuration.parameters.e_sigma = config.get("e_sigma")
         configuration.parameters.c_m = config.get("c_m")
         configuration.parameters.c_sigma = config.get("c_sigma")
-        # configuration.parameters.scaling_factor = config.get("scaling_factor")
+        configuration.parameters.scaling_factor = config.get("scaling_factor")
         configuration.parameters.popsize = config.get("popsize")
         configuration.parameters.c_sigma_ratio = config.get("c_sigma_ratio")
         configuration.parameters.damp_sigma = config.get("damp_sigma")
@@ -99,7 +94,7 @@ if __name__ == "__main__":
         # Define our environment variables
         scenario = Scenario(
             ea.configspace,
-            name="Cifar100",
+            name="ImageNet",
             deterministic=True,
             use_default_config=True,
             walltime_limit=20*24*60*60,  # After XX seconds, we stop the hyperparameter optimization
